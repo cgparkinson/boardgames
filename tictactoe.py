@@ -113,5 +113,6 @@ class TicTacToe(BoardGame):
                 break
         print('winner', winner)
 
-TicTacToe().play_demo_game()
-TicTacToe().play()
+if __name__ == '__main__':
+    TicTacToe().play_demo_game()
+    TicTacToe().play()

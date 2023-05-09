@@ -10,7 +10,6 @@ class ChessPiece(Item):
     def move(self, board, to_location, player):
         if not self.validate_move(board, to_location):
             raise Exception('invalid move!')
-            return
         piece_in_to_location = board.get_item(to_location)
         if piece_in_to_location:
             if piece_in_to_location.color == player.id:
@@ -166,11 +165,11 @@ class Chess(BoardGame):
 def move(board_game_state, player, move_from, move_to):
     board = board_game_state.board
     piece = board.get_item(move_from)
-    if player == piece.player:
-        piece.move(board, move_to, player)
+    current_player = board_game_state.player_turn
+    if current_player == piece.player:
+        piece.move(board, move_to, current_player)
     else:
-        print('don\'t move your opponent\'s piece!')
-    # print(board_game_state)
+        raise Exception('don\'t move your opponent\'s piece!')
 
 class Move(Action):
     def __init__(self, move_from, move_to) -> None:

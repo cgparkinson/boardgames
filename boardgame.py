@@ -1,7 +1,6 @@
 from typing import List, Tuple
 from abc import ABC
 import numpy as np
-import pygame
 from enum import Enum
 import random
 
@@ -198,6 +197,7 @@ class Turn():
             raise Exception('invalid turn')
         for action in self.actions:
             action.perform(board_game_state=board_game_state, player=self.player)
+        board_game_state.next_player()
 
 class Player():
     # has Inventory (of cards/resources in hand)
@@ -248,8 +248,12 @@ class StandardCard(Item):
     def __init__(self, suit, value) -> None:
         self.suit = suit
         self.value = value
-        self.image = pygame.image.load('images/' + self.suit.name + '-' + str(self.value) + '.svg')
+        self.image = None
         super().__init__()
+    
+    def initialise_rendering(self):
+        import pygame
+        self.image = pygame.image.load('images/' + self.suit.name + '-' + str(self.value) + '.svg')
 
 class Stack():
     def __init__(self) -> None:
@@ -324,8 +328,8 @@ class BoardGameState():
         self.players = players
         self.initialise_players()
         self.player_turn = self.players[0]  # whose go is it?
-        self.turn_phase = TurnPhase.PASS_THE_LAPTOP  # which part of this person's go is it?
-        self.game_phase = GamePhase.SETUP  # which section of the game is it?
+        self.turn_phase = TurnPhase.PASS_THE_LAPTOP  # which part of this person's go is it?  # TODO implement
+        self.game_phase = GamePhase.SETUP  # which section of the game is it?  # TODO implement
     
     def __repr__(self) -> str:
         return str(self.board) + str(self.players) + str(self.player_turn) + str(self.turn_phase) + str(self.game_phase)
@@ -346,6 +350,7 @@ class BoardGameState():
     
     def next_player(self):
         self.player_turn = self.player_turn.player_to_left
+        self.turn_phase = TurnPhase.PASS_THE_LAPTOP
 
 class BoardGame():
     def __init__(self, state: BoardGameState) -> None:
