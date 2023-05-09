@@ -1,6 +1,9 @@
-import numpy as np
-from typing import List, Tuple, NamedTuple
+from typing import List, Tuple
 from abc import ABC
+import numpy as np
+import pygame
+from enum import Enum
+import random
 
 COLORS = {
     'black':"\033[0;30m",
@@ -118,7 +121,7 @@ class BoardGrid(Board):
         return abs(from_location[0] - to_location[0]) + abs(from_location[1] - to_location[1])
     
     def spaces_moving_linear(self, from_location, to_location):
-        assert self.moving_horizonally_only(from_location, to_location) or self.moving_vertically_only(from_location, to_location) or self.moving_diagonally_only(from_location, to_location)
+        assert self.moving_horizontally_only(from_location, to_location) or self.moving_vertically_only(from_location, to_location) or self.moving_diagonally_only(from_location, to_location)
         manhattan_distance = self.spaces_moving_manhattan(from_location, to_location)
         if self.moving_diagonally_only(from_location, to_location):
             return manhattan_distance / 2
@@ -150,7 +153,6 @@ class BoardGrid(Board):
         items = []
         if diag or vert:
             spaces_moving = abs(from_location[1] - to_location[1])
-            print(spaces_moving)
         if horiz:
             spaces_moving = abs(from_location[0] - to_location[0])
         
@@ -160,9 +162,7 @@ class BoardGrid(Board):
             y_sign = int((to_location[1] - from_location[1]) / spaces_moving)
             x_move = x_sign * distance
             y_move = y_sign * distance
-            print(x_move, y_move)
             items.extend(self.get_items((from_location[0] + x_move, from_location[1] + y_move)))
-        print(items)
         return items
 
 class BoardNetwork(Board):
@@ -203,10 +203,11 @@ class Player():
     # has Inventory (of cards/resources in hand)
     # may have a board, e.g. Agricola / Wingspan
     # 
-    def __init__(self, name: str, id: str, inventory: List = []) -> None:
+    def __init__(self, name: str, id: str, public_inventory: List = [], private_inventory: List = []) -> None:
         self.name = name
         self.id = id
-        self.inventory = inventory
+        self.public_inventory = public_inventory
+        self.private_inventory = private_inventory
         self.player_to_right = None
         self.player_to_left = None
 
@@ -223,31 +224,73 @@ class Player():
         self.player_to_right = player
 
 class ItemWithCost(Item):
-    # TODO has obtain cost, play cost, expressed as e.g. obtain_cost = [(3, Gold), (2, Sheep)] where Gold is a class
+    # has obtain cost, play cost, expressed as e.g. obtain_cost = [(3, Gold), (2, Sheep)] where Gold is a class
     # e.g. for Wingspan, can express as [(3, Food)] where Fish is a class inheriting from Food
-    def __init__(self) -> None:
+    def __init__(self, obtain_cost: List[Item], play_cost: List[Item]) -> None:
         super.__init__(self)
-        pass
+        self.obtain_cost = obtain_cost
+        self.play_cost = play_cost
+
+class TextCard(Item):
+    # item with additional text
+    def __init__(self, text) -> None:
+        self.text = text
+        super().__init__()
+
+class Suits(Enum):
+    CLUB = 0
+    SPADE = 1
+    HEART = 2
+    DIAMOND = 3
 
 class StandardCard(Item):
     # TODO card in a standard 52 card deck
-    def __init__(self) -> None:
+    def __init__(self, suit, value) -> None:
+        self.suit = suit
+        self.value = value
+        self.image = pygame.image.load('images/' + self.suit.name + '-' + str(self.value) + '.svg')
         super().__init__()
 
-class Deck():
-    # TODO stack of Item?
+class Stack():
     def __init__(self) -> None:
-        pass
+        self.items = []
+    
+    def add(self, item):
+        self.items.append(item)
+
+    def peek(self):
+        if (len(self.items) > 0):
+            return self.items[-1]
+        else:
+            return None
+    
+    def clear(self):
+        self.items = []
+
 
 class FaceUpDeck():
     # TODO deck where you can see the top card?
     def __init__(self) -> None:
         pass
 
-class StandardDeck(Deck):
+
+class StandardDeck(Stack):
     # stack of 52 StandardCards
-    def __init__(self) -> None:
-        pass
+    def __init__(self):
+        super.__init__()
+        for suit in Suits:
+            for value in range(1,14):
+                self.items.append(StandardCard(suit, value))
+
+    def shuffle(self):
+        random.shuffle(self.cards)
+
+    def deal(self):
+        return self.cards.pop()
+
+    def length(self):
+        return len(self.cards)
+
 
 class Die(Item):
     # can be rolled, not necessarily numbers on it (Wingspan)
@@ -261,19 +304,37 @@ class Die(Item):
         self.value = np.random.randint(0,6)
         return self.value
 
+class TurnPhase(Enum):
+    PASS_THE_LAPTOP = 'pass the laptop'
+    MAIN_PHASE = 'main turn phase'
+
+class GamePhase(Enum):
+    SETUP = 'setup phase'
+    MAIN_PHASE = 'main game phase'
+    COMPLETE = 'game over'
+
 class BoardGameState():
     # can be updated
     # usually consists of board, with its state, players, their state
+    # TODO: not all games have one board, but all games have public elements (eg boards, decks), 
+    # public player-owned elements (played cards, resources), and private player-owned elements (hand)
+    # This class can be subclassed to accomodate this?
     def __init__(self, board: Board, players: List[Player]) -> None:
         self.board = board
         self.players = players
-        self.initialise_players
+        self.initialise_players()
+        self.player_turn = self.players[0]  # whose go is it?
+        self.turn_phase = TurnPhase.PASS_THE_LAPTOP  # which part of this person's go is it?
+        self.game_phase = GamePhase.SETUP  # which section of the game is it?
     
     def __repr__(self) -> str:
-        return str(self.board) + str(self.players)
+        return str(self.board) + str(self.players) + str(self.player_turn) + str(self.turn_phase) + str(self.game_phase)
     
     def done(self):
-        return self.board.win_condition_met() or any([p.win_condition_met() for p in self.players])
+        done = self.board.win_condition_met() or any([p.win_condition_met() for p in self.players])
+        if done:
+            self.game_phase = GamePhase.COMPLETE
+        return done
     
     def initialise_players(self):
         for i in range(len(self.players) - 1):
@@ -282,6 +343,9 @@ class BoardGameState():
             self.players[i].player_to_right = self.players[i-1]
         self.players[-1].player_to_left = self.players[0]
         self.players[0].player_to_right = self.players[-1]
+    
+    def next_player(self):
+        self.player_turn = self.player_turn.player_to_left
 
 class BoardGame():
     def __init__(self, state: BoardGameState) -> None:

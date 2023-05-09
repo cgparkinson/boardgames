@@ -9,7 +9,7 @@ class ChessPiece(Item):
     
     def move(self, board, to_location, player):
         if not self.validate_move(board, to_location):
-            print('invalid move!')
+            raise Exception('invalid move!')
             return
         piece_in_to_location = board.get_item(to_location)
         if piece_in_to_location:
@@ -91,12 +91,12 @@ class Pawn(ChessPiece):
         moving_diagonally = board.moving_diagonally_only(from_location, to_location)
         moving_vertically = board.moving_vertically_only(from_location, to_location)
         items_on_path = board.items_on_path(from_location, to_location)
-        spaces_moving = board.spaces_moving(from_location, to_location)
+        spaces_moving = board.spaces_moving_linear(from_location, to_location)
         piece_in_to_location = board.get_item(to_location)
         enemy_piece_in_to_location = piece_in_to_location and piece_in_to_location.color != self.color
-        not_moved_yet = self.color == 'black' and from_location[0] == 1 or self.color == 'white' and from_location[0] == 8-1-1
+        not_moved_yet = self.color == 'black' and from_location[1] == 1 or self.color == 'white' and from_location[1] == 8-1-1
 
-        taking_piece = moving_diagonally and enemy_piece_in_to_location
+        taking_piece = moving_diagonally and enemy_piece_in_to_location and spaces_moving == 1
         normal_move = moving_vertically and spaces_moving == 1
         double_first_move = spaces_moving == 2 and not_moved_yet
 
@@ -170,12 +170,12 @@ def move(board_game_state, player, move_from, move_to):
         piece.move(board, move_to, player)
     else:
         print('don\'t move your opponent\'s piece!')
-    print(board_game_state)
+    # print(board_game_state)
 
 class Move(Action):
     def __init__(self, move_from, move_to) -> None:
         fn = move
         params = {'move_from': move_from, 'move_to': move_to}
         super().__init__(fn, params)
-
-Chess().play_demo_game()
+if __name__ == '__main__':
+    Chess().play_demo_game()
