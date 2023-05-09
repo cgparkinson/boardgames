@@ -6,15 +6,15 @@ class TicTacToeBoard(BoardGrid):
 
     def win_condition_met(self):
         for i in range(3):
-            if all([isinstance(self.get_item(i,j), X) for j in range(3)]) or \
-                all([isinstance(self.get_item(j,i), X) for j in range(3)]) or \
-                    all([isinstance(self.get_item(j,j), X) for j in range(3)]) or \
-                        all([isinstance(self.get_item(j,2-j), X) for j in range(3)]):
+            if all([isinstance(self.get_item((i,j)), X) for j in range(3)]) or \
+                all([isinstance(self.get_item((j,i)), X) for j in range(3)]) or \
+                    all([isinstance(self.get_item((j,j)), X) for j in range(3)]) or \
+                        all([isinstance(self.get_item((j,2-j)), X) for j in range(3)]):
                    return X
-            elif all([isinstance(self.get_item(i,j), O) for j in range(3)]) or \
-                all([isinstance(self.get_item(j,i), O) for j in range(3)]) or \
-                    all([isinstance(self.get_item(j,j), O) for j in range(3)]) or \
-                        all([isinstance(self.get_item(j,2-j), O) for j in range(3)]):
+            elif all([isinstance(self.get_item((i,j)), O) for j in range(3)]) or \
+                all([isinstance(self.get_item((j,i)), O) for j in range(3)]) or \
+                    all([isinstance(self.get_item((j,j)), O) for j in range(3)]) or \
+                        all([isinstance(self.get_item((j,2-j)), O) for j in range(3)]):
                    return O
         return None
 
