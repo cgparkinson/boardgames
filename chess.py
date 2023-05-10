@@ -1,5 +1,5 @@
-from typing import List
-from boardgame import BoardGame, BoardGameState, Player
+from typing import List, Tuple
+from boardgame import BoardGame, BoardGameState, Player, GamePhase
 from board import Board, BoardGrid
 from items import Item
 from actions import Action, Turn
@@ -130,6 +130,7 @@ class Pawn(ChessPiece):
         normal_move = moving_vertically and spaces_moving == 1
         double_first_move = moving_vertically and spaces_moving == 2 and not_moved_yet
         en_passant = False  # TODO
+        promotion = False  # TODO
 
         valid = (taking_piece or normal_move or double_first_move or en_passant) and not items_on_path
         return valid
@@ -172,7 +173,8 @@ class ChessState(BoardGameState):
                 # if the person who has just moved is in check, this is an illegal state and we're in a hypothetical loop
                 if owner != self.player_turn:
                     return False
-
+                if self.hypothetical and owner==self.player_turn:
+                    input()
                 can_save = False
                 own_pieces = [item for item in self.board.items if item.player == owner]
                 # for each of your own pieces, try every move, and find if you can stop being in check
@@ -196,12 +198,19 @@ class ChessState(BoardGameState):
 
 class Chess(BoardGame):
     def __init__(self) -> None:
-        board = ChessBoard()
+
         black = Player(name='Alice', id='black')
         white = Player(name='Bob', id='white')
 
         self.white = white
         self.black = black
+
+        board = ChessBoard()
+
+        state = ChessState(board=board, players=[white, black])
+        super().__init__(state)
+
+        self.action_list = [Move]
 
         board.add_item(item=Rook(player=white), location=(0,0))
         board.add_item(item=Knight(player=white), location=(1,0))
@@ -223,8 +232,6 @@ class Chess(BoardGame):
         for i in range(8):
             board.add_item(item=Pawn(player=white), location=(i,1))
             board.add_item(item=Pawn(player=black), location=(i,6))
-        state = ChessState(board=board, players=[white, black])
-        super().__init__(state)
     
     def play_demo_game(self):
         [move.perform(board_game_state=self.state) for move in moves_from_notation(notation='e4 e5', state=self.state)]
@@ -242,10 +249,10 @@ class Chess(BoardGame):
         [move.perform(board_game_state=self.state) for move in moves_from_notation(notation='xg5+ Qxg5', state=self.state)]
         [move.perform(board_game_state=self.state) for move in moves_from_notation(notation='Rxh5 ', state=self.state)]
 
-        # print(self.state)
+        assert self.state.game_phase == GamePhase.COMPLETE
 
 
-def move(board_game_state, player, move_from, move_to):
+def move(board_game_state, player, move_from: Tuple[int], move_to: Tuple[int]):
     board = board_game_state.board
     piece = board.get_item(move_from)
     if not piece:
@@ -343,5 +350,5 @@ def moves_from_notation(state, notation='e3 e5'):
 
 if __name__ == '__main__':
     chess = Chess()
-    chess.play_demo_game()
+    chess.play()
     print(chess.state)

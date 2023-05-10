@@ -66,10 +66,20 @@ class BoardGameState():
         self.hypothetical = False
     
     def __repr__(self) -> str:
-        return str(self.hypothetical) + '\nboard:' + str(self.board) + '\n players:' + str(self.players) + '\nturn:' + str(self.player_turn) + '\nturn phase:' + str(self.turn_phase) + '\ngame phase:' + str(self.game_phase) + '\nlast turn was:' + str(self.turns[-1])
+        hyp = str(self.hypothetical)
+        board = '\nboard:' + str(self.board)
+        players = '\n players:' + str(self.players)
+        turn = '\nturn:' + str(self.player_turn)
+        turn_phase = '\nturn phase:' + str(self.turn_phase)
+        game_phase = '\ngame phase:' + str(self.game_phase)
+        last_turn = '\nlast turn was:' + str(self.turns[-1]) if self.turns else 'first turn.'
+
+        return hyp + board + players + turn + turn_phase + game_phase + last_turn
     
-    @staticmethod
-    def win_condition_met():
+    def validate_turn(self, turn):
+        return True
+    
+    def win_condition_met(self):
         return False
 
     def done(self):
@@ -99,6 +109,32 @@ class BoardGameState():
 class BoardGame():
     def __init__(self, state: BoardGameState) -> None:
         self.state = state
+        self.action_list = []
 
     def play(self):
-        print(self.state)
+        while self.state != GamePhase.COMPLETE:
+            actions = []
+            while True:
+                print(self.state)
+                print('#########')
+                print('current actions on this turn:')
+                print(actions)
+                print('choose an action:')
+                print('-1: commit turn')
+                print(dict(enumerate(self.action_list)))
+                action_ref = int(input())
+                if action_ref == -1:
+                    Turn(actions=actions, player=self.state.player_turn).perform(board_game_state=self.state)
+                    actions = []
+                else:
+                    ActionClass = self.action_list[action_ref]
+                    import inspect
+                    import json
+                    params = list(inspect.signature(ActionClass).parameters)
+                    kwargs = {}
+                    for param in params:
+                        print(param)
+                        value = json.loads(input())
+                        kwargs.update({param: value})
+                    action = ActionClass(**kwargs)
+                    actions.append(action)
