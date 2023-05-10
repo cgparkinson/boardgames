@@ -23,7 +23,7 @@ class Turn():
         self.player = player
 
     def validate(self, board_game_state):
-        return board_game_state.player_turn.id == self.player.id and board_game_state.validate_turn(self)
+        return board_game_state.player_turn == self.player and board_game_state.validate_turn(self)
     
     def perform(self, board_game_state, player=None):
         if not player:

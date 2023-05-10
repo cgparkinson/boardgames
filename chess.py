@@ -22,7 +22,7 @@ class ChessPiece(Item):
             raise Exception('invalid move from ' + str(self.location) + ' ' + str(to_location))
         piece_in_to_location = board.get_item(to_location)
         if piece_in_to_location:
-            if piece_in_to_location.color == player.id:
+            if piece_in_to_location.player == player:
                 raise Exception(str(board) + '\n can\'t take your own piece, from ' + str(self.location) + ' to ' + str(to_location))
             board.remove_item(piece_in_to_location)
         moving_inbounds = board.moving_inbounds(to_location)
