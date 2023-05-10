@@ -3,6 +3,8 @@ from abc import ABC
 from enum import Enum
 import random
 from board import Board
+from copy import deepcopy, copy
+from actions import Turn
 
 
 class Player():
@@ -18,7 +20,15 @@ class Player():
         self.player_to_left = None
 
     def __repr__(self) -> str:
-        return self.name + ' ' + self.id
+        return self.name + ' playing as ' + self.id
+    
+    def __eq__(self, player):
+        # compare by ID to allow deep copy in hypothetical game states
+        return player.id == self.id
+    
+    def __ne__(self, player):
+        # compare by ID to allow deep copy in hypothetical game states
+        return player.id != self.id
     
     def win_condition_met(self):
         return False
@@ -53,12 +63,17 @@ class BoardGameState():
         self.turn_phase = TurnPhase.PASS_THE_LAPTOP  # which part of this person's go is it?  # TODO implement
         self.game_phase = GamePhase.SETUP  # which section of the game is it?  # TODO implement
         self.turns = []
+        self.hypothetical = False
     
     def __repr__(self) -> str:
-        return str(self.board) + str(self.players) + str(self.player_turn) + str(self.turn_phase) + str(self.game_phase)
+        return str(self.hypothetical) + '\nboard:' + str(self.board) + '\n players:' + str(self.players) + '\nturn:' + str(self.player_turn) + '\nturn phase:' + str(self.turn_phase) + '\ngame phase:' + str(self.game_phase) + '\nlast turn was:' + str(self.turns[-1])
     
+    @staticmethod
+    def win_condition_met():
+        return False
+
     def done(self):
-        done = self.board.win_condition_met() or any([p.win_condition_met() for p in self.players])
+        done = self.win_condition_met() or self.board.win_condition_met() or any([p.win_condition_met() for p in self.players])
         if done:
             self.game_phase = GamePhase.COMPLETE
         return done
@@ -74,6 +89,12 @@ class BoardGameState():
     def next_player(self):
         self.player_turn = self.player_turn.player_to_left
         self.turn_phase = TurnPhase.PASS_THE_LAPTOP
+    
+    def after(self, turn: Turn):
+        hypothetical_state = deepcopy(self)
+        hypothetical_state.hypothetical = True
+        turn.perform(hypothetical_state)
+        return hypothetical_state
 
 class BoardGame():
     def __init__(self, state: BoardGameState) -> None:

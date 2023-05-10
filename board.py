@@ -11,6 +11,9 @@ class Board():
     def get_items(self):
         pass
 
+    def win_condition_met(self):
+        return False
+
 class BoardGrid(Board):
     # for chess, Go, tic-tac-toe, Food Chain Magnate...
     # has items on it (e.g. Piece), which cover one or more squares
@@ -20,6 +23,7 @@ class BoardGrid(Board):
         self.x = x
         self.y = y
         self.items = []
+        self.locations = [(a, b) for a in range(x) for b in range(y)]
     
     def add_item(self, item: Item, location):
         top_left_x, top_left_y = location
@@ -66,8 +70,9 @@ class BoardGrid(Board):
             self.remove_item(item)
 
     def __repr__(self) -> str:
-        s = ''
+        s = '\n'
         for y in range(self.y):
+            y = self.y - y - 1
             for x in range(self.x): 
                 item = self.get_item((x,y))
                 if item:
