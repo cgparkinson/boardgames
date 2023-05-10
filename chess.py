@@ -1,4 +1,7 @@
-from boardgame import BoardGame, BoardGameState, BoardGrid, Item, Action, Player, Turn
+from boardgame import BoardGame, BoardGameState, Player
+from board import BoardGrid
+from items import Item
+from actions import Action, Turn
 
 class ChessPiece(Item):
     def __init__(self, letter, player) -> None:
@@ -98,8 +101,9 @@ class Pawn(ChessPiece):
         taking_piece = moving_diagonally and enemy_piece_in_to_location and spaces_moving == 1
         normal_move = moving_vertically and spaces_moving == 1
         double_first_move = spaces_moving == 2 and not_moved_yet
+        en_passant = False  # TODO
 
-        valid = (taking_piece or normal_move or double_first_move) and not items_on_path
+        valid = (taking_piece or normal_move or double_first_move or en_passant) and not items_on_path
         return valid
 
 class ChessBoard(BoardGrid):
@@ -178,3 +182,33 @@ class Move(Action):
         super().__init__(fn, params)
 if __name__ == '__main__':
     Chess().play_demo_game()
+
+def moves_from_notation(board, notation='Bxd5+ Kg6'):
+    notation = notation.replace('x', '').replace('+', '')
+    white_move = notation.split(' ')[0]
+    black_move = notation.split(' ')[1]
+
+    white_piece = Bishop
+    white_location = (3,4)
+
+    black_piece = King
+    black_location = (6,5)
+
+    # find a bishop that can move to (3,4)
+
+def game_from_pgn(pgn):
+    """
+    [Event ""]
+    [Site ""]
+    [Date "????.??.??"]
+    [Round ""]
+    [White "White"]
+    [Black "Black"]
+    [TimeControl "-"]
+    [Result "1-0"]
+
+    1.e4 e5 2.Nf3 f6 3.Nxe5 fxe5 4.Qh5+ Ke7 5.Qxe5+ Kf7 6.Bc4+ d5 7.Bxd5+ 
+    Kg6 8.h4 h5 9.Bxb7 Bxb7 10.Qf5+ Kh6 11.d4+ g5 12.Qf7 Qe7 13.hxg5+ Qxg5 
+    14.Rxh5# 1-0
+    """
+    pass

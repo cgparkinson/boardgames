@@ -1,4 +1,7 @@
-from boardgame import BoardGame, BoardGameState, BoardGrid, Item, Action, Player, Turn
+from boardgame import BoardGame, BoardGameState, Player
+from board import BoardGrid
+from items import Item
+from actions import Action, Turn
 
 class TicTacToeBoard(BoardGrid):
     def __init__(self) -> None:
